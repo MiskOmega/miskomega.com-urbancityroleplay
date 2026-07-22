@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MISKOMEGA.COM | GTA ROLEPLAY</title>
+    <link rel="icon" type="image/png" href="favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg: #050505;
+            --surface: #0f0f0f;
+            --border: #1e1e1e;
+            --border-active: #404040;
+            --text-main: #ffffff;
+            --text-dim: #808080;
+            --terminal-green: #00ff41;
+            --dva-pink: #ff007a;
+            --scanline-color: rgba(0, 255, 65, 0.03);
+        }
+
+        body { 
+            background: var(--bg); 
+            color: var(--text-main); 
+            font-family: 'JetBrains Mono', monospace;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        body::before {
+            content: " ";
+            position: fixed; inset: 0;
+            background: linear-gradient(var(--scanline-color) 50%, rgba(0, 0, 0, 0) 50%);
+            background-size: 100% 4px;
+            z-index: 100; pointer-events: none; opacity: 0.5;
+        }
+
+        header { padding: 80px 5vw 20px 5vw; border-bottom: 1px solid var(--border); }
+        .nav-back { color: var(--terminal-green); text-decoration: none; font-size: 0.8rem; display: inline-block; margin-bottom: 20px; transition: 0.3s; }
+        .nav-back:hover { text-shadow: 0 0 8px var(--terminal-green); }
+        h1 { font-size: 1.8rem; text-transform: uppercase; }
+
+        .status-link {
+            font-size: 0.7rem; color: var(--terminal-green); text-decoration: none;
+            display: flex; align-items: center; gap: 12px; margin-top: 10px; transition: 0.3s;
+        }
+        .status-link:hover { color: #fff; text-shadow: 0 0 10px var(--terminal-green); }
+
+        .content-area { padding: 40px 5vw 0 5vw; }
+        .data-header {
+            display: grid; grid-template-columns: 1fr 120px 100px;
+            padding: 10px 20px; color: var(--text-dim); font-size: 0.7rem;
+            text-transform: uppercase; border-bottom: 1px solid var(--border);
+            margin-bottom: 10px;
+        }
+
+        /* Section Styling */
+        section { padding: 0 5vw 60px 5vw; width: 100%; }
+        .line-divider {
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 25px; width: 100%; position: relative;
+        }
+        
+        /* Default Right Align */
+        .line-divider::after {
+            content: attr(data-id);
+            position: absolute; right: 0; top: -15px;
+            font-size: 10px; color: var(--text-dim); text-transform: uppercase;
+            background: var(--bg); padding-left: 10px;
+        }
+
+        /* Centered Header Variant */
+        .line-divider.center::after {
+            right: auto; left: 50%; transform: translateX(-50%);
+            padding: 0 10px;
+        }
+
+        .game-list { list-style: none; display: flex; flex-direction: column; gap: 2px; }
+
+        .game-item {
+            display: grid; grid-template-columns: 1fr 120px 100px;
+            padding: 20px; background: var(--surface); text-decoration: none;
+            color: inherit; align-items: center; position: relative; transition: 0.2s;
+            --accent: var(--text-dim); 
+        }
+
+        /* Compact List Variant for NES/SNES */
+        .compact-list .game-item {
+            padding: 6px 20px; /* Highly Reduced padding */
+        }
+        
+        /* Flatten the title and dev info into one row */
+        .compact-list .game-item > div {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .compact-list .g-title {
+            font-size: 0.8rem; /* Smaller font */
+        }
+
+        .compact-list .g-dev {
+            display: inline; /* Force inline */
+            margin-top: 0; 
+            font-size: 0.65rem;
+            opacity: 0.7;
+        }
+
+        .compact-list .game-preview {
+            width: 40px; height: 40px; /* Smaller preview on hover */
+            right: 230px; 
+        }
+        .compact-list .game-item:hover .game-preview {
+            right: 210px;
+        }
+
+        .game-item:hover { 
+            background: color-mix(in srgb, var(--accent) 10%, transparent); 
+            border-left: 4px solid var(--accent); 
+            padding-left: 16px;
+        }
+
+        .game-preview {
+            position: absolute; right: 250px; top: 50%; transform: translateY(-50%);
+            width: 60px; height: 80px; background-size: cover; opacity: 0;
+            transition: 0.3s; border: 1px solid var(--border); z-index: 10; pointer-events: none;
+        }
+        .game-item:hover .game-preview { opacity: 1; right: 230px; }
+
+        .g-title { font-weight: 700; color: #fff; text-transform: uppercase; font-size: 1.1rem; }
+        .g-dev { color: var(--text-dim); font-size: 0.6rem; text-transform: uppercase; margin-top: 4px; display: block; }
+        
+        .g-rating { font-size: 0.9rem; text-align: right; font-weight: 700; color: var(--accent); }
+        .g-status { font-size: 0.7rem; color: var(--text-dim); text-align: right; text-transform: uppercase; }
+
+        .tag-nsfw {
+            color: var(--dva-pink); font-size: 0.6rem; border: 1px solid var(--dva-pink);
+            padding: 1px 4px; margin-left: 10px; vertical-align: middle;
+        }
+
+        #nsfw-modal {
+            display: none; position: fixed; inset: 0;
+            background: rgba(0,0,0,0.95); z-index: 1000;
+            justify-content: center; align-items: center; backdrop-filter: blur(10px);
+        }
+        .modal-box { background: var(--surface); border: 1px solid var(--dva-pink); padding: 40px; max-width: 400px; text-align: center; }
+        .btn { background: none; border: 1px solid var(--border-active); color: var(--text-main); padding: 10px 30px; cursor: pointer; transition: 0.3s; margin: 10px; font-family: inherit; }
+        .btn-yes:hover { background: var(--dva-pink); border-color: var(--dva-pink); color: #fff; }
+
+        footer { margin-top: auto; padding: 80px 5vw; border-top: 1px solid var(--border); display: flex; flex-direction: column; align-items: center; gap: 20px; }
+        
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.3; } 100% { opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <div id="nsfw-modal">
+        <div class="modal-box">
+            <div style="color: var(--dva-pink); font-weight: 700; margin-bottom: 10px;">!! WARNING: ADULT ONLY !!</div>
+            <p style="font-size: 0.8rem; color: var(--text-dim);">The link you are about to access contains NSFW content. Are you 18+?</p>
+            <div class="modal-btns">
+                <button class="btn btn-yes" onclick="confirmNSFW()">YES</button>
+                <button class="btn" onclick="closeModal()">NO</button>
+            </div>
+        </div>
+    </div>
+
+    <header>
+        <a href="home.html" class="nav-back">< [RETURN HOME]</a>
+        <h1>GTA Roleplay</h1>
+        <div class="system-status">
+            <a href="https://kick.com/dvaboi" class="status-link" target="_blank">
+                <div style="width: 8px; height: 8px; background: var(--terminal-green); border-radius: 50%; animation: pulse 1.5s infinite; flex-shrink: 0;"></div>
+                Live on Kick // 24-7
+            </a>
+        </div>
+    </header>
+    
+    <div class="content-area">
+        <div class="data-header">
+            <span></span>
+            <span style="text-align: right;">STATE</span>
+            <span style="text-align: right;">STATUS</span>
+        </div>
+    </div>
+
+    <section>
+        <div class="line-divider center" data-id="Articles"></div>
+        <div class="game-list random-list">
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">How to Make a City</span>
+                    <span class="g-dev">// QBox //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Notable Roleplay Cities</span>
+                    <span class="g-dev">// Eclipse Roleplay (The Swanky Universe) //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+        </div>
+    </section>
+
+    <section>
+        <div class="line-divider center" data-id="SCRIPTS"></div>
+        <div class="game-list compact-list">
+            <a href="#" class="game-item nsfw-link" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Delivery Missions</span>
+                    <span class="g-dev">// Pizza // Weed // Firefighting // Money Cleaning //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Strongholds</span>
+                    <span class="g-dev">// Gang Street // Gun Store // Police Station // EMS Station //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+        </div>
+    </section>
+
+    <section>
+        <div class="line-divider center" data-id="MLO's"></div>
+        <div class="game-list compact-list">
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Gun Store</span>
+                    <span class="g-dev">// Vinewood //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Gang Hideout</span>
+                    <span class="g-dev">// Grove Street //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Interior Cells</span>
+                    <span class="g-dev">// Apartment // Hideout // Rooms //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">House Mansion</span>
+                    <span class="g-dev">// Grove Street // Vinewood //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+        </div>
+    </section>
+
+    <section>
+        <div class="line-divider center" data-id="CLOTHING"></div>
+        <div class="game-list compact-list">
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Chains</span>
+                    <span class="g-dev">// Models //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Flags</span>
+                    <span class="g-dev">// Skins //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Shirts Sweaters</span>
+                    <span class="g-dev">// Skins //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Pants Shorts Skirts</span>
+                    <span class="g-dev">// Skins //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Shoes</span>
+                    <span class="g-dev">// Basketball // Skate // Driving // Heels // Boots //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Eyes</span>
+                    <span class="g-dev">// Eye Pack //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Tattoo's</span>
+                    <span class="g-dev">// Skins //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+        </div>
+    </section>
+
+    <section>
+        <div class="line-divider center" data-id="WEAPONS"></div>
+        <div class="game-list compact-list">
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">PEW PEW Auto Pistol</span>
+                    <span class="g-dev">// Chromatic Leaf //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">DRAGON Auto Rifle</span>
+                    <span class="g-dev">// Red vs Blue //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Knife</span>
+                    <span class="g-dev">// Skins //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Baseball Bat</span>
+                    <span class="g-dev">// Skins //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+            <a href="#" class="game-item" style="--accent: #4c51f7;">
+                <div class="game-preview" style="background-image: url('https://picsum.photos/200/300?random=52');"></div>
+                <div>
+                    <span class="g-title">Knuckles</span>
+                    <span class="g-dev">// Words on Nuckles //</span>
+                </div>
+                <span class="g-rating" style="--accent: #808080;">XX/XX</span>
+                <span class="g-status">Incomplete</span>
+            </a>
+        </div>
+    </section>
+
+    <footer>
+        <a href="https://miskomega.com" style="color: var(--text-dim); text-decoration: none; font-size: 0.75rem; letter-spacing: 2px;">MISKOMEGA.COM // DVaBoi - MiskOmega</a>
+        <div style="font-size: 10px; color: var(--border-active);">EST. 2026 - MiskOmega</div>
+    </footer>
+
+    <script>
+        // SHUFFLE (Only targets lists with 'random-list' class)
+        window.addEventListener('DOMContentLoaded', () => {
+            const lists = document.querySelectorAll('.random-list');
+            lists.forEach(list => {
+                const items = Array.from(list.children);
+                for (let i = items.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [items[i], items[j]] = [items[j], items[i]];
+                }
+                items.forEach(item => list.appendChild(item));
+            });
+        });
+
+        let pendingUrl = "";
+        document.querySelectorAll('.nsfw-link').forEach(link => {
+            link.addEventListener('click', function(e) {
+                e.preventDefault(); 
+                pendingUrl = this.getAttribute('href');
+                document.getElementById('nsfw-modal').style.display = 'flex';
+            });
+        });
+
+        function closeModal() { document.getElementById('nsfw-modal').style.display = 'none'; }
+        function confirmNSFW() { if (pendingUrl) { window.open(pendingUrl, '_blank'); } closeModal(); }
+    </script>
+</body>
+</html>
